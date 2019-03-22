@@ -8,6 +8,7 @@ const passport = require("passport");
 
 //Load Validation
 const validationRegistrationInput = require("../../validation/register");
+const validationLoginInput = require("../../validation/login");
 
 //Load User model
 const User = require("../../models/User");
@@ -63,6 +64,12 @@ router.post("/register", (req, res) => {
 //@Desc User Login / return JWT-Token
 //@access Public
 router.post("/login", (req, res) => {
+  const { errors, isValid } = validationLoginInput(req.body);
+  //Check Validation
+  if (!isValid) {
+    return res.status(400).json(errors);
+  }
+
   const email = req.body.email;
   const password = req.body.password;
 
@@ -70,7 +77,8 @@ router.post("/login", (req, res) => {
     .then(user => {
       //check for user
       if (!user) {
-        return res.status(404).json({ email: "User not found" });
+        errors.email = "User not found";
+        return res.status(404).json(errors);
       }
 
       //Check password
@@ -88,7 +96,8 @@ router.post("/login", (req, res) => {
             }
           );
         } else {
-          return res.status(400).json({ passowrd: "Password incorrect" });
+          errors.password = "Password incorrect";
+          return res.status(400).json(errors);
         }
       });
     })
