@@ -44,7 +44,7 @@ const ProfileSChema = new Schema({
         required: true
       },
       rating: {
-        type: String,
+        type: Number,
         required: true
       },
       date: {
@@ -60,8 +60,7 @@ const ProfileSChema = new Schema({
         required: true
       },
       comment: {
-        type: String,
-        required: true
+        type: String
       }
     }
   ],
