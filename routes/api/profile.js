@@ -229,4 +229,67 @@ router.post(
   }
 );
 
+// @route  DELETE api/profile/reviews/:review_id
+// @desc   Delete movie review from profile
+// @access Private
+router.delete(
+  "/reviews/:review_id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Profile.findOne({ user: req.user.id })
+      .then(profile => {
+        // Get remove index
+        const removeIndex = profile.reviews
+          .map(item => item.id)
+          .indexOf(req.params.review_id);
+
+        //Splice out of array
+        profile.reviews.splice(removeIndex, 1);
+
+        //Save
+        profile.save().then(profile => res.json(profile));
+      })
+      .catch(err => res.status(404).json(err));
+  }
+);
+
+// @route  DELETE api/profile/recommendations/:recommendation_id
+// @desc   Delete movie recommendation from profile
+// @access Private
+router.delete(
+  "/recommendations/:recommendation_id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Profile.findOne({ user: req.user.id })
+      .then(profile => {
+        // Get remove index
+        const removeIndex = profile.recommendations
+          .map(item => item.id)
+          .indexOf(req.params.recommendation_id);
+
+        //Splice out of array
+        profile.recommendations.splice(removeIndex, 1);
+
+        //Save
+        profile.save().then(profile => res.json(profile));
+      })
+      .catch(err => res.status(404).json(err));
+  }
+);
+
+// @route  DELETE api/profile
+// @desc   Delete user & profile
+// @access Private
+router.delete(
+  "/",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Profile.findOneAndDelete({ user: req.user.id }).then(() => {
+      User.findOneAndDelete({ _id: req.user.id }).then(() => {
+        res.json({ success: true });
+      });
+    });
+  }
+);
+
 module.exports = router;
