@@ -74,7 +74,7 @@ router.delete(
   (req, res) => {
     Post.findById(req.params.post_id)
       .then(post => {
-        if (req.user.id == post.user) {
+        if (req.user.id == post.user.toString()) {
           post
             .remove()
             .then(() => res.json({ sucess: "Post deleted successfully" }));
@@ -83,6 +83,73 @@ router.delete(
             .status(401)
             .json({ AuthorizationError: "User did not post the Post" });
         }
+      })
+      .catch(err =>
+        res.status(404).json({ postNotFound: "No post found with that ID" })
+      );
+  }
+);
+
+// @route  POST api/posts/like/:post_id
+// @desc   Like a post
+// @access Private
+router.post(
+  "/like/:post_id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Post.findById(req.params.post_id)
+      .then(post => {
+        // Check if user has already liked the post
+        if (
+          post.likes.filter(like => like.user.toString() === req.user.id)
+            .length > 0
+        ) {
+          return res
+            .status(400)
+            .json({ likedAlready: "User already liked this post" });
+        }
+
+        // Add to likes array
+        post.likes.unshift({ user: req.user.id });
+
+        post.save().then(post => {
+          res.json(post);
+        });
+      })
+      .catch(err =>
+        res.status(404).json({ postNotFound: "No post found with that ID" })
+      );
+  }
+);
+
+// @route  POST api/posts/unlike/:post_id
+// @desc   Unlike a post
+// @access Private
+router.post(
+  "/unlike/:post_id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    Post.findById(req.params.post_id)
+      .then(post => {
+        // Check to see whether user is trying to dislike before liking it
+        if (
+          post.likes.filter(like => like.user.toString() === req.user.id)
+            .length === 0
+        ) {
+          return res
+            .status(400)
+            .json({ notLikedYet: "User has not liked this post yet" });
+        }
+
+        //Get index of Like to remove
+        const removeIndex = post.likes
+          .map(item => item.user.toString())
+          .indexOf(req.user.id);
+
+        // Splice out of array
+        post.likes.splice(removeIndex, 1);
+
+        post.save().then(post => res.json(post));
       })
       .catch(err =>
         res.status(404).json({ postNotFound: "No post found with that ID" })
